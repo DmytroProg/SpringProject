@@ -3,37 +3,31 @@ package com.example.engtutor.services;
 import com.example.engtutor.models.Student;
 import com.example.engtutor.models.StudentsGroup;
 import com.example.engtutor.repository.GroupRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 @org.springframework.stereotype.Service
-public class GroupService implements Service<StudentsGroup> {
-
-    private final GroupRepository groupRepository;
+@CacheConfig(cacheNames = "groups")
+public class GroupService extends Service<StudentsGroup> {
 
     @Autowired
     public GroupService(GroupRepository groupRepository) {
-
-        this.groupRepository = groupRepository;
+        super(groupRepository);
     }
 
     @Override
-    public StudentsGroup add(StudentsGroup entity) {
-        if(!isValid(entity)) throw new IllegalArgumentException();
-        return groupRepository.save(entity);
-    }
-
-    @Override
-    public void remove(Long id) {
-        groupRepository.deleteById(id);
-    }
-
-    @Override
+    @Transactional
+    @CachePut
     public StudentsGroup update(Long id, StudentsGroup entity) {
-        StudentsGroup group = groupRepository.findById(id)
+        StudentsGroup group = repository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("group does not exist"));
 
         if(entity.getName() != null && !entity.getName().isEmpty() &&
@@ -45,14 +39,21 @@ public class GroupService implements Service<StudentsGroup> {
     }
 
     @Override
+    @Cacheable
     public List<StudentsGroup> getAll() {
-        return groupRepository.findAll();
+        return repository.findAll();
     }
 
     @Override
-    public Optional<StudentsGroup> getById(Long id) {
+    @Cacheable
+    public List<StudentsGroup> getPaged(int limit, int offset) {
+        return repository.findAll(PageRequest.of(offset, limit)).stream().toList();
+    }
 
-        return groupRepository.findById(id);
+    @Override
+    @Cacheable
+    public Optional<StudentsGroup> getById(Long id) {
+        return repository.findById(id);
     }
 
     @Override

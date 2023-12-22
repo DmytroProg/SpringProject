@@ -2,36 +2,32 @@ package com.example.engtutor.services;
 
 import com.example.engtutor.models.Teacher;
 import com.example.engtutor.repository.TeacherRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 @org.springframework.stereotype.Service
-public class TeacherService implements Service<Teacher>{
-
-    private final TeacherRepository teacherRepository;
+@CacheConfig(cacheNames = "teachers")
+public class TeacherService extends Service<Teacher> {
 
     @Autowired
-    public TeacherService(TeacherRepository teacherRepository) {
-        this.teacherRepository = teacherRepository;
+    public TeacherService(JpaRepository<Teacher, Long> teacherRepository) {
+        super(teacherRepository);
     }
-
     @Override
-    public Teacher add(Teacher entity) {
-        if(!isValid(entity)) throw new IllegalArgumentException();
-        return teacherRepository.save(entity);
-    }
-
-    @Override
-    public void remove(Long id) {
-        teacherRepository.deleteById(id);
-    }
-
-    @Override
+    @Transactional
+    @CachePut
     public Teacher update(Long id, Teacher entity) {
-        Teacher teacher = teacherRepository.findById(id)
+        Teacher teacher = repository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("teacher does not exist"));
 
         if(entity.getFirstName() != null && !entity.getFirstName().isEmpty() &&
@@ -62,17 +58,40 @@ public class TeacherService implements Service<Teacher>{
     }
 
     @Override
+    @Cacheable
     public List<Teacher> getAll() {
-        return teacherRepository.findAll();
+        return repository.findAll();
     }
 
     @Override
+    @Cacheable
+    public List<Teacher> getPaged(int limit, int offset) {
+        return repository.findAll(PageRequest.of(offset, limit)).stream().toList();
+    }
+
+    @Override
+    @Cacheable
     public Optional<Teacher> getById(Long id) {
-        return teacherRepository.findById(id);
+        return repository.findById(id);
     }
 
     @Override
-    public boolean isValid(Teacher entity) {
-        return false;
+    public boolean isValid(Teacher teacher) {
+        if (teacher.getFirstName() == null || teacher.getFirstName().trim().isEmpty())
+            return false;
+
+        if (teacher.getLastName() == null || teacher.getLastName().trim().isEmpty())
+            return false;
+
+        if (teacher.getDateOfBirth() == null || teacher.getDateOfBirth().isAfter(LocalDate.now()))
+            return false;
+
+        if (teacher.getDescription() == null || teacher.getDescription().trim().isEmpty())
+            return false;
+
+        if(teacher.getSalary() < 0)
+            return false;
+
+        return true;
     }
 }

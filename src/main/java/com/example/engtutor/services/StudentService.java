@@ -3,9 +3,13 @@ package com.example.engtutor.services;
 import com.example.engtutor.models.Student;
 import com.example.engtutor.models.StudentsGroup;
 import com.example.engtutor.repository.GroupRepository;
-import com.example.engtutor.repository.StudentRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,32 +17,21 @@ import java.util.Objects;
 import java.util.Optional;
 
 @org.springframework.stereotype.Service
-public class StudentService implements Service<Student>{
-
-    private final StudentRepository studentRepository;
+@CacheConfig(cacheNames = "students")
+public class StudentService extends Service<Student> {
     private final GroupRepository groupRepository;
 
     @Autowired
-    public StudentService(StudentRepository studentRepository, GroupRepository groupRepository) {
-        this.studentRepository = studentRepository;
+    public StudentService(JpaRepository<Student, Long> studentService, GroupRepository groupRepository){
+        super(studentService);
         this.groupRepository = groupRepository;
     }
 
     @Override
-    public Student add(Student entity) {
-        if(!isValid(entity)) throw new IllegalArgumentException();
-        return studentRepository.save(entity);
-    }
-
-    @Override
-    public void remove(Long id) {
-        studentRepository.deleteById(id);
-    }
-
-    @Override
     @Transactional
+    @CachePut
     public Student update(Long id, Student entity) {
-        Student student = studentRepository.findById(id)
+        Student student = repository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("student does not exist"));
 
         if(entity.getFirstName() != null && !entity.getFirstName().isEmpty() &&
@@ -67,13 +60,21 @@ public class StudentService implements Service<Student>{
     }
 
     @Override
+    @Cacheable
     public List<Student> getAll() {
-        return studentRepository.findAll();
+        return repository.findAll();
     }
 
     @Override
+    @Cacheable
+    public List<Student> getPaged(int limit, int offset) {
+        return repository.findAll(PageRequest.of(offset, limit)).stream().toList();
+    }
+
+    @Override
+    @Cacheable
     public Optional<Student> getById(Long id) {
-        return studentRepository.findById(id);
+        return repository.findById(id);
     }
 
     public boolean isValid(Student student){

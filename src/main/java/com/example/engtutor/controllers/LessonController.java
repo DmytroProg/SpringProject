@@ -7,12 +7,13 @@ import com.example.engtutor.services.Service;
 import com.example.engtutor.viewmodel.LessonViewModel;
 import com.example.engtutor.viewmodel.ViewModelBase;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
+@EnableCaching
 @RequestMapping("api/v1/lessons")
 public class LessonController extends ControllerBase<Lesson>{
 
@@ -31,6 +32,12 @@ public class LessonController extends ControllerBase<Lesson>{
         return getViewModels(service.getAll());
     }
 
+    @GetMapping(params={"limit", "offset"})
+    public List<ViewModelBase> getPagedLessons(@RequestParam("limit") int limit,
+                                               @RequestParam("offset") int offset){
+        return getViewModels(service.getPaged(limit, offset));
+    }
+
     @GetMapping(path = "{lessonId}")
     public ViewModelBase getLesson(@PathVariable("lessonId") Long id){
         return getById(id);
@@ -40,7 +47,7 @@ public class LessonController extends ControllerBase<Lesson>{
     public void addLesson(@RequestBody LessonViewModel lessonVM){
         StudentsGroup group = groupService.getById(lessonVM.groupId)
                 .orElseThrow(() -> new IllegalStateException("group does not exist"));
-        Teacher teacher = teacherService.getById(lessonVM.teacher.id)
+        Teacher teacher = teacherService.getById(lessonVM.teacherId)
                 .orElseThrow(() -> new IllegalStateException("teacher does not exist"));
         Lesson lesson = new Lesson(
                 lessonVM.title,

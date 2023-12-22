@@ -1,23 +1,20 @@
 package com.example.engtutor.controllers;
 
 import com.example.engtutor.models.Lesson;
-import com.example.engtutor.models.Student;
-import com.example.engtutor.models.StudentsGroup;
 import com.example.engtutor.models.Teacher;
 import com.example.engtutor.services.Service;
 import com.example.engtutor.viewmodel.LessonViewModel;
-import com.example.engtutor.viewmodel.StudentViewModel;
 import com.example.engtutor.viewmodel.TeacherViewModel;
 import com.example.engtutor.viewmodel.ViewModelBase;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
+@EnableCaching
 @RequestMapping("api/v1/teachers")
 public class TeacherController extends ControllerBase<Teacher>{
 
@@ -29,6 +26,12 @@ public class TeacherController extends ControllerBase<Teacher>{
     @GetMapping
     public List<ViewModelBase> getTeachers(){
        return getViewModels(service.getAll());
+    }
+
+    @GetMapping(params={"limit", "offset"})
+    public List<ViewModelBase> getPagedTeachers(@RequestParam("limit") int limit,
+                                               @RequestParam("offset") int offset){
+        return getViewModels(service.getPaged(limit, offset));
     }
 
     @GetMapping(path = "{teacherId}")

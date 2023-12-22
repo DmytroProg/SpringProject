@@ -4,43 +4,38 @@ import com.example.engtutor.models.Lesson;
 import com.example.engtutor.models.StudentsGroup;
 import com.example.engtutor.models.Teacher;
 import com.example.engtutor.repository.GroupRepository;
-import com.example.engtutor.repository.LessonRepository;
 import com.example.engtutor.repository.TeacherRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 @org.springframework.stereotype.Service
-public class LessonService implements Service<Lesson>{
+@CacheConfig(cacheNames = "lessons")
+public class LessonService extends Service<Lesson> {
 
-    private final LessonRepository lessonRepository;
     private final GroupRepository groupRepository;
     private final TeacherRepository teacherRepository;
 
     @Autowired
-    public LessonService(LessonRepository lessonRepository, GroupRepository groupRepository, TeacherRepository teacherRepository) {
-        this.lessonRepository = lessonRepository;
+    public LessonService(JpaRepository<Lesson, Long> lessonRepository, GroupRepository groupRepository, TeacherRepository teacherRepository) {
+        super(lessonRepository);
         this.groupRepository = groupRepository;
         this.teacherRepository = teacherRepository;
     }
 
     @Override
-    public Lesson add(Lesson entity) {
-        if(!isValid(entity)) throw new IllegalArgumentException();
-        return lessonRepository.save(entity);
-    }
-
-    @Override
-    public void remove(Long id) {
-        lessonRepository.deleteById(id);
-    }
-
-    @Override
+    @Transactional
+    @CachePut
     public Lesson update(Long id, Lesson entity) {
-        Lesson lesson = lessonRepository.findById(id)
+        Lesson lesson = repository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("student does not exist"));
 
         if(entity.getTitle() != null && !entity.getTitle().isEmpty() &&
@@ -71,13 +66,21 @@ public class LessonService implements Service<Lesson>{
     }
 
     @Override
+    @Cacheable
     public List<Lesson> getAll() {
-        return lessonRepository.findAll();
+        return repository.findAll();
     }
 
     @Override
+    @Cacheable
+    public List<Lesson> getPaged(int limit, int offset) {
+        return repository.findAll(PageRequest.of(offset, limit)).stream().toList();
+    }
+
+    @Override
+    @Cacheable
     public Optional<Lesson> getById(Long id) {
-        return lessonRepository.findById(id);
+        return repository.findById(id);
     }
 
     @Override

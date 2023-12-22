@@ -6,13 +6,14 @@ import com.example.engtutor.services.Service;
 import com.example.engtutor.models.Student;
 import com.example.engtutor.viewmodel.ViewModelBase;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 @RestController
+@EnableCaching
 @RequestMapping("api/v1/students")
 public class StudentController extends ControllerBase<Student>{
 
@@ -27,6 +28,12 @@ public class StudentController extends ControllerBase<Student>{
     @GetMapping
     public List<ViewModelBase> getStudents(){
         return getViewModels(service.getAll());
+    }
+
+    @GetMapping(params={"limit", "offset"})
+    public List<ViewModelBase> getPagedStudents(@RequestParam("limit") int limit,
+                                               @RequestParam("offset") int offset){
+        return getViewModels(service.getPaged(limit, offset));
     }
 
     @GetMapping(path = "{studentId}")

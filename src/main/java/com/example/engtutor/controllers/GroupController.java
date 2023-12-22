@@ -7,14 +7,14 @@ import com.example.engtutor.viewmodel.GroupViewModel;
 import com.example.engtutor.viewmodel.StudentViewModel;
 import com.example.engtutor.viewmodel.ViewModelBase;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @RestController
+@EnableCaching
 @RequestMapping("api/v1/groups")
 public class GroupController extends ControllerBase<StudentsGroup>{
 
@@ -41,6 +41,12 @@ public class GroupController extends ControllerBase<StudentsGroup>{
     @GetMapping
     public List<ViewModelBase> getGroups(){
         return getViewModels(service.getAll());
+    }
+
+    @GetMapping(params={"limit", "offset"})
+    public List<ViewModelBase> getPagedGroups(@RequestParam("limit") int limit,
+                                               @RequestParam("offset") int offset){
+        return getViewModels(service.getPaged(limit, offset));
     }
 
     @GetMapping("{groupId}")
