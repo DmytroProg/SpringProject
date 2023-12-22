@@ -8,6 +8,7 @@ import com.example.engtutor.services.Service;
 import com.example.engtutor.viewmodel.LessonViewModel;
 import com.example.engtutor.viewmodel.StudentViewModel;
 import com.example.engtutor.viewmodel.TeacherViewModel;
+import com.example.engtutor.viewmodel.ViewModelBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,37 +19,27 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("api/v1/teachers")
-public class TeacherController {
-
-    private final Service<Teacher> teacherService;
+public class TeacherController extends ControllerBase<Teacher>{
 
     @Autowired
     public TeacherController(Service<Teacher> teacherService) {
-        this.teacherService = teacherService;
+        super(teacherService);
     }
 
     @GetMapping
-    public List<TeacherViewModel> getTeachers(){
-        List<TeacherViewModel> teachers = new ArrayList<>();
-        for(Teacher t : teacherService.getAll()){
-            TeacherViewModel teacherVM = new TeacherViewModel(t);
-            teachers.add(teacherVM);
-        }
-        return teachers;
+    public List<ViewModelBase> getTeachers(){
+       return getViewModels(service.getAll());
     }
 
     @GetMapping(path = "{teacherId}")
-    public TeacherViewModel getTeacher(@PathVariable("teacherId") Long id){
-        Teacher teacher = teacherService.getById(id)
-                .orElseThrow(() -> new IllegalStateException("teacher does not exist"));
-
-        return new TeacherViewModel(teacher);
+    public ViewModelBase getTeacher(@PathVariable("teacherId") Long id){
+        return getById(id);
     }
 
     @GetMapping(path = "{teacherId}/lessons")
     public List<LessonViewModel> getLessons(@PathVariable("teacherId") Long id){
         List<LessonViewModel> lessons = new ArrayList<>();
-        Teacher teacher = teacherService.getById(id)
+        Teacher teacher = service.getById(id)
                 .orElseThrow(() -> new IllegalStateException("teacher does not exist"));
         for(Lesson l : teacher.getLessons()){
             LessonViewModel lessonVM = new LessonViewModel(l);
@@ -66,12 +57,12 @@ public class TeacherController {
                 teacherViewModel.description,
                 teacherViewModel.salary
             );
-        teacherService.add(teacher);
+        service.add(teacher);
     }
 
     @DeleteMapping(path = "{teacherId}")
     public void deleteTeacher(@PathVariable("teacherId") Long id){
-        teacherService.remove(id);
+        service.remove(id);
     }
 
     @PutMapping(path = "{teacherId}")
@@ -82,6 +73,6 @@ public class TeacherController {
                               @RequestParam(required = false) String description,
                               @RequestParam(required = false) int salary){
         Teacher teacher = new Teacher(id, firstName, lastName, dateOfBirth, description, salary);
-        teacherService.update(id, teacher);
+        service.update(id, teacher);
     }
 }

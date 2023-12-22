@@ -9,7 +9,7 @@ import jakarta.persistence.OneToOne;
 
 import java.time.LocalDateTime;
 
-public class LessonViewModel {
+public class LessonViewModel extends ViewModelBase{
     public Long id;
     public String title;
     public LocalDateTime date;

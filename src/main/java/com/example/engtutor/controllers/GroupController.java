@@ -5,6 +5,7 @@ import com.example.engtutor.models.StudentsGroup;
 import com.example.engtutor.services.Service;
 import com.example.engtutor.viewmodel.GroupViewModel;
 import com.example.engtutor.viewmodel.StudentViewModel;
+import com.example.engtutor.viewmodel.ViewModelBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,19 +16,17 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("api/v1/groups")
-public class GroupController {
-    private final Service<StudentsGroup> groupService;
+public class GroupController extends ControllerBase<StudentsGroup>{
 
     @Autowired
     public GroupController(Service<StudentsGroup> groupService) {
-
-        this.groupService = groupService;
+        super(groupService);
     }
 
     @GetMapping(path="{groupId}/students")
     public List<StudentViewModel> getStudents(@PathVariable("groupId") Long groupId){
         List<StudentViewModel> students = new ArrayList<>();
-        Optional<StudentsGroup> group = groupService.getById(groupId);
+        Optional<StudentsGroup> group = service.getById(groupId);
         if(group.isEmpty()){
             throw new IllegalStateException("group does not exist");
         }
@@ -40,34 +39,24 @@ public class GroupController {
     }
 
     @GetMapping
-    public List<GroupViewModel> getGroups(){
-        List<GroupViewModel> groups = new ArrayList<>();
-        for(StudentsGroup g : groupService.getAll()){
-            GroupViewModel groupVM = new GroupViewModel();
-            groupVM.id = g.getId();
-            groupVM.name = g.getName();
-            groups.add(groupVM);
-        }
-        return groups;
+    public List<ViewModelBase> getGroups(){
+        return getViewModels(service.getAll());
     }
 
     @GetMapping("{groupId}")
-    public GroupViewModel getGroup(@PathVariable("groupId") Long id){
-        StudentsGroup group = groupService.getById(id)
-                .orElseThrow(() -> new IllegalStateException("group does not exist"));
-
-        return new GroupViewModel(group);
+    public ViewModelBase getGroup(@PathVariable("groupId") Long id){
+        return getById(id);
     }
 
     @PostMapping
     public void addGroup(@RequestBody GroupViewModel groupVM){
         StudentsGroup group = new StudentsGroup(groupVM.id, groupVM.name);
-        groupService.add(group);
+        service.add(group);
     }
 
     @DeleteMapping(path = "{groupId}")
     public void deleteGroup(@PathVariable("groupId") Long id){
-        groupService.remove(id);
+        service.remove(id);
     }
 
     @PutMapping(path = "{groupId}")
@@ -75,6 +64,6 @@ public class GroupController {
                               @RequestParam(required = false) String name){
 
         StudentsGroup group = new StudentsGroup(groupId, name);
-        groupService.update(groupId, group);
+        service.update(groupId, group);
     }
 }

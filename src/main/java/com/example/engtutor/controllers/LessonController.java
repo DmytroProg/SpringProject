@@ -5,45 +5,35 @@ import com.example.engtutor.models.StudentsGroup;
 import com.example.engtutor.models.Teacher;
 import com.example.engtutor.services.Service;
 import com.example.engtutor.viewmodel.LessonViewModel;
+import com.example.engtutor.viewmodel.ViewModelBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/lessons")
-public class LessonController {
+public class LessonController extends ControllerBase<Lesson>{
 
-    private final Service<Lesson> lessonService;
     private final Service<StudentsGroup> groupService;
     private final Service<Teacher> teacherService;
 
     @Autowired
     public LessonController(Service<Lesson> lessonService, Service<StudentsGroup> groupService, Service<Teacher> teacherService) {
-        this.lessonService = lessonService;
+        super(lessonService);
         this.groupService = groupService;
         this.teacherService = teacherService;
     }
 
     @GetMapping
-    public List<LessonViewModel> getLessons(){
-        List<LessonViewModel> lessons = new ArrayList<>();
-        for(Lesson l : lessonService.getAll()){
-            LessonViewModel lessonVM = new LessonViewModel(l);
-            lessons.add(lessonVM);
-        }
-        return lessons;
+    public List<ViewModelBase> getLessons(){
+        return getViewModels(service.getAll());
     }
 
     @GetMapping(path = "{lessonId}")
-    public LessonViewModel getLesson(@PathVariable("lessonId") Long id){
-        Lesson lesson = lessonService.getById(id)
-                .orElseThrow(() -> new IllegalStateException("lesson does not exist"));
-
-        return new LessonViewModel(lesson);
+    public ViewModelBase getLesson(@PathVariable("lessonId") Long id){
+        return getById(id);
     }
 
     @PostMapping
@@ -58,12 +48,12 @@ public class LessonController {
                 group,
                 teacher
         );
-        lessonService.add(lesson);
+        service.add(lesson);
     }
 
     @DeleteMapping(path = "{lessonId}")
     public void deleteLesson(@PathVariable("lessonId") Long id){
-        lessonService.remove(id);
+        service.remove(id);
     }
 
     @PutMapping(path = "{lessonId}")
@@ -78,6 +68,6 @@ public class LessonController {
                 .orElseThrow(() -> new IllegalStateException("teacher does not exist"));
 
         Lesson lesson = new Lesson(id, title, date, group, teacher);
-        lessonService.update(id, lesson);
+        service.update(id, lesson);
     }
 }

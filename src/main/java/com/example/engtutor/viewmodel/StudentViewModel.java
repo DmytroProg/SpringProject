@@ -4,7 +4,7 @@ import com.example.engtutor.models.Student;
 
 import java.time.LocalDate;
 
-public class StudentViewModel {
+public class StudentViewModel extends ViewModelBase{
     public Long id;
     public String firstName;
     public String lastName;

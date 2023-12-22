@@ -4,42 +4,34 @@ import com.example.engtutor.models.StudentsGroup;
 import com.example.engtutor.viewmodel.StudentViewModel;
 import com.example.engtutor.services.Service;
 import com.example.engtutor.models.Student;
+import com.example.engtutor.viewmodel.ViewModelBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("api/v1/students")
-public class StudentController {
+public class StudentController extends ControllerBase<Student>{
 
-    private final Service<Student> studentService;
     private final Service<StudentsGroup> groupService;
 
     @Autowired
     public StudentController(Service<Student> studentService, Service<StudentsGroup> groupService) {
-        this.studentService = studentService;
+        super(studentService);
         this.groupService = groupService;
     }
 
     @GetMapping
-    public List<StudentViewModel> getStudents(){
-        List<StudentViewModel> students = new ArrayList<>();
-        for(Student st : studentService.getAll()){
-            StudentViewModel studentVM = new StudentViewModel(st);
-            students.add(studentVM);
-        }
-        return students;
+    public List<ViewModelBase> getStudents(){
+        return getViewModels(service.getAll());
     }
 
     @GetMapping(path = "{studentId}")
-    public StudentViewModel getStudent(@PathVariable("studentId") Long id){
-        Student student = studentService.getById(id)
-                .orElseThrow(() -> new IllegalStateException("student does not exist"));
-        return new StudentViewModel(student);
+    public ViewModelBase getStudent(@PathVariable("studentId") Long id){
+        return getById(id);
     }
 
     @PostMapping
@@ -55,13 +47,13 @@ public class StudentController {
                     studentViewModel.dateOfBirth,
                     group.get()
             );
-            studentService.add(student);
+            service.add(student);
         }
     }
 
     @DeleteMapping(path = "{studentId}")
     public void deleteStudent(@PathVariable("studentId") Long id){
-        studentService.remove(id);
+        service.remove(id);
     }
 
     @PutMapping(path = "{studentId}")
@@ -73,6 +65,6 @@ public class StudentController {
         StudentsGroup group = groupId != null ? groupService.getById(groupId)
                 .orElseThrow(() -> new IllegalStateException("group does not exist")) : null;
         Student student = new Student(studentId, firstName, lastName, dateOfBirth, group);
-        studentService.update(studentId, student);
+        service.update(studentId, student);
     }
 }
