@@ -7,6 +7,7 @@ import com.example.engtutor.repository.StudentRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,6 +26,7 @@ public class StudentService implements Service<Student>{
 
     @Override
     public Student add(Student entity) {
+        if(!isValid(entity)) throw new IllegalArgumentException();
         return studentRepository.save(entity);
     }
 
@@ -72,5 +74,18 @@ public class StudentService implements Service<Student>{
     @Override
     public Optional<Student> getById(Long id) {
         return studentRepository.findById(id);
+    }
+
+    public boolean isValid(Student student){
+        if (student.getFirstName() == null || student.getFirstName().trim().isEmpty())
+            return false;
+
+        if (student.getLastName() == null || student.getLastName().trim().isEmpty())
+            return false;
+
+        if (student.getDateOfBirth() == null || student.getDateOfBirth().isAfter(LocalDate.now()))
+            return false;
+
+        return true;
     }
 }

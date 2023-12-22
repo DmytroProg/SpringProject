@@ -8,6 +8,7 @@ import com.example.engtutor.repository.LessonRepository;
 import com.example.engtutor.repository.TeacherRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -28,6 +29,7 @@ public class LessonService implements Service<Lesson>{
 
     @Override
     public Lesson add(Lesson entity) {
+        if(!isValid(entity)) throw new IllegalArgumentException();
         return lessonRepository.save(entity);
     }
 
@@ -76,5 +78,16 @@ public class LessonService implements Service<Lesson>{
     @Override
     public Optional<Lesson> getById(Long id) {
         return lessonRepository.findById(id);
+    }
+
+    @Override
+    public boolean isValid(Lesson lesson) {
+        if (lesson.getTitle() == null || lesson.getTitle().trim().isEmpty())
+            return false;
+
+        if (lesson.getDate() == null)
+            return false;
+
+        return true;
     }
 }

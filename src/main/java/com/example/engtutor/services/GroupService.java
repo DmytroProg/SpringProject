@@ -22,7 +22,7 @@ public class GroupService implements Service<StudentsGroup> {
 
     @Override
     public StudentsGroup add(StudentsGroup entity) {
-
+        if(!isValid(entity)) throw new IllegalArgumentException();
         return groupRepository.save(entity);
     }
 
@@ -53,5 +53,13 @@ public class GroupService implements Service<StudentsGroup> {
     public Optional<StudentsGroup> getById(Long id) {
 
         return groupRepository.findById(id);
+    }
+
+    @Override
+    public boolean isValid(StudentsGroup group) {
+        if (group.getName() == null || group.getName().trim().isEmpty())
+            return false;
+
+        return true;
     }
 }

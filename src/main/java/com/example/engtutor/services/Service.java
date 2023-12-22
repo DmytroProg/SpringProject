@@ -9,4 +9,6 @@ public interface Service<T> {
     T update(Long id, T entity);
     List<T> getAll();
     Optional<T> getById(Long id);
+
+    boolean isValid(T entity);
 }

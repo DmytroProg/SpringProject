@@ -20,6 +20,7 @@ public class TeacherService implements Service<Teacher>{
 
     @Override
     public Teacher add(Teacher entity) {
+        if(!isValid(entity)) throw new IllegalArgumentException();
         return teacherRepository.save(entity);
     }
 
@@ -68,5 +69,10 @@ public class TeacherService implements Service<Teacher>{
     @Override
     public Optional<Teacher> getById(Long id) {
         return teacherRepository.findById(id);
+    }
+
+    @Override
+    public boolean isValid(Teacher entity) {
+        return false;
     }
 }
