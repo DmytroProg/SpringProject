@@ -23,8 +23,8 @@ public class User implements UserDetails{
     @Id
     @GeneratedValue
     private Long id;
-    private String username;
-    private String login;
+    private String firstname;
+    private String lastname;
     private String password;
     private String email;
 
@@ -43,25 +43,25 @@ public class User implements UserDetails{
 
     @Override
     public String getUsername(){
-        return username;
+        return email;
     }
     @Override
     public boolean isAccountNonExpired() {
-        return false;
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return false;
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return false;
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return false;
+        return true;
     }
 }
