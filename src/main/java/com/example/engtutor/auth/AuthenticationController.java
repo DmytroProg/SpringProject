@@ -16,7 +16,16 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request){
-        return ResponseEntity.ok(service.register(request));
+        try {
+            service.register(request);
+            return ResponseEntity.status(201).build();
+        }
+        catch(IllegalArgumentException ex){
+            return ResponseEntity.status(409).build();
+        }
+        catch(Exception ex){
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PostMapping("/authenticate")

@@ -26,6 +26,10 @@ public class AuthenticationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
                 .build();
+        if(userRepository.findByEmail(request.getEmail()).isPresent()){
+            throw new IllegalArgumentException();
+        }
+
         userRepository.save(user);
         var jwt = jwtService.generateToken(user);
         return AuthenticationResponse.builder()
