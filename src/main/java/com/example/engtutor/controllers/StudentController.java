@@ -1,12 +1,15 @@
 package com.example.engtutor.controllers;
 
-import com.example.engtutor.models.StudentsGroup;
+import com.example.engtutor.models.Group;
+import com.example.engtutor.viewmodel.ErrorViewModel;
 import com.example.engtutor.viewmodel.StudentViewModel;
 import com.example.engtutor.services.Service;
 import com.example.engtutor.models.Student;
 import com.example.engtutor.viewmodel.ViewModelBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
@@ -17,61 +20,67 @@ import java.util.Optional;
 @RequestMapping("api/v1/students")
 public class StudentController extends ControllerBase<Student>{
 
-    private final Service<StudentsGroup> groupService;
+    private final Service<Group> groupService;
 
     @Autowired
-    public StudentController(Service<Student> studentService, Service<StudentsGroup> groupService) {
+    public StudentController(Service<Student> studentService, Service<Group> groupService) {
         super(studentService);
         this.groupService = groupService;
     }
 
     @GetMapping
-    public List<ViewModelBase> getStudents(){
-        return getViewModels(service.getAll());
+    public ResponseEntity<Object> getStudents(){
+        return handleResponse(obj -> getViewModels(service.getAll()), HttpStatus.OK);
     }
 
     @GetMapping(params={"limit", "offset"})
-    public List<ViewModelBase> getPagedStudents(@RequestParam("limit") int limit,
-                                               @RequestParam("offset") int offset){
-        return getViewModels(service.getPaged(limit, offset));
+    public ResponseEntity<Object> getPagedStudents(@RequestParam("limit") int limit,
+                                               @RequestParam(value="offset", required = false) int offset){
+        return handleResponse(obj -> getViewModels(service.getPaged(limit, offset)), HttpStatus.OK);
     }
 
     @GetMapping(path = "{studentId}")
-    public ViewModelBase getStudent(@PathVariable("studentId") Long id){
-        return getById(id);
+    public ResponseEntity<Object> getStudent(@PathVariable("studentId") Long id){
+        return handleResponse(obj -> getById(id), HttpStatus.OK);
     }
 
     @PostMapping
-    public void addStudent(@RequestBody StudentViewModel studentViewModel){
-        Optional<StudentsGroup> group = groupService.getById(studentViewModel.groupId);
-        if(group.isEmpty()){
-            throw new IllegalStateException("group does not exist");
-        }
-        else {
+    public ResponseEntity<Object> addStudent(@RequestBody StudentViewModel studentViewModel){
+        return handleResponse(obj -> {
+            var group = groupService.getById(studentViewModel.groupId)
+                    .orElseThrow(() -> new NullPointerException("group not found"));
+
             Student student = new Student(
                     studentViewModel.firstName,
                     studentViewModel.lastName,
                     studentViewModel.dateOfBirth,
-                    group.get()
+                    group
             );
             service.add(student);
-        }
+            return new StudentViewModel(student);
+        }, HttpStatus.CREATED);
     }
 
     @DeleteMapping(path = "{studentId}")
-    public void deleteStudent(@PathVariable("studentId") Long id){
-        service.remove(id);
+    public ResponseEntity<Object> deleteStudent(@PathVariable("studentId") Long id){
+        return handleResponse(obj -> {
+            service.remove(id);
+            return null;
+        }, HttpStatus.OK);
     }
 
     @PutMapping(path = "{studentId}")
-    public void updateStudent(@PathVariable("studentId") Long studentId,
+    public ResponseEntity<Object> updateStudent(@PathVariable("studentId") Long studentId,
                               @RequestParam(required = false) String firstName,
                               @RequestParam(required = false) String lastName,
                               @RequestParam(required = false) LocalDate dateOfBirth,
                               @RequestParam(required = false) Long groupId){
-        StudentsGroup group = groupId != null ? groupService.getById(groupId)
-                .orElseThrow(() -> new IllegalStateException("group does not exist")) : null;
-        Student student = new Student(studentId, firstName, lastName, dateOfBirth, group);
-        service.update(studentId, student);
+        return handleResponse(obj -> {
+            var group = groupService.getById(groupId)
+                    .orElseThrow(() -> new NullPointerException("group not found"));
+            Student student = new Student(studentId, firstName, lastName, dateOfBirth, group);
+            service.update(studentId, student);
+            return new StudentViewModel(student);
+        }, HttpStatus.OK);
     }
 }

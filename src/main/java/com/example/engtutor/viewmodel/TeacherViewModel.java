@@ -1,9 +1,11 @@
 package com.example.engtutor.viewmodel;
 
 import com.example.engtutor.models.Teacher;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
+@NoArgsConstructor
 public class TeacherViewModel extends ViewModelBase{
     public Long id;
     public String firstName;
@@ -12,10 +14,6 @@ public class TeacherViewModel extends ViewModelBase{
     public int age;
     public String description;
     public int salary;
-
-    public TeacherViewModel(){
-
-    }
 
     public TeacherViewModel(Teacher teacher){
         id = teacher.getId();

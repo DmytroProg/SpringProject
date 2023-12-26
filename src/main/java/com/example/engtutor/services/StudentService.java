@@ -1,15 +1,15 @@
 package com.example.engtutor.services;
 
+import com.example.engtutor.helpers.Output;
+import com.example.engtutor.helpers.StringHelper;
 import com.example.engtutor.models.Student;
-import com.example.engtutor.models.StudentsGroup;
+import com.example.engtutor.models.Group;
 import com.example.engtutor.repository.GroupRepository;
+import com.example.engtutor.repository.StudentRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.*;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,28 +18,52 @@ import java.util.Optional;
 
 @org.springframework.stereotype.Service
 @CacheConfig(cacheNames = "students")
-public class StudentService extends Service<Student> {
+public class StudentService implements Service<Student> {
+
+    private final StudentRepository repository;
     private final GroupRepository groupRepository;
 
     @Autowired
-    public StudentService(JpaRepository<Student, Long> studentService, GroupRepository groupRepository){
-        super(studentService);
+    public StudentService(StudentRepository repository, GroupRepository groupRepository){
+        this.repository = repository;
         this.groupRepository = groupRepository;
     }
 
     @Override
+    @CachePut(key="#entity.id")
+    public Student add(Student entity) {
+        validate(entity);
+        return repository.save(entity);
+    }
+
+    @Override
+    @Caching(evict = {
+            @CacheEvict(key = "'allStudents'"),
+            @CacheEvict(key = "#id")
+    })
+    public void remove(Long id) {
+        var item = repository.findById(id);
+        if(item.isEmpty())
+            throw new IllegalArgumentException("group" + Output.VALUE_NOT_EXIST);
+        repository.deleteById(id);
+    }
+
+    @Override
     @Transactional
-    @CachePut
+    @Caching(evict = {
+            @CacheEvict(key = "'allStudents'"),
+            @CacheEvict(key = "#id")
+    })
     public Student update(Long id, Student entity) {
         Student student = repository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("student does not exist"));
 
-        if(entity.getFirstName() != null && !entity.getFirstName().isEmpty() &&
+        if(entity.getFirstName() != null &&
            !Objects.equals(entity.getFirstName(), student.getFirstName())){
             student.setFirstName(entity.getFirstName());
         }
 
-        if(entity.getLastName() != null && !entity.getLastName().isEmpty() &&
+        if(entity.getLastName() != null &&
                 !Objects.equals(entity.getLastName(), student.getLastName())){
             student.setLastName(entity.getLastName());
         }
@@ -51,7 +75,7 @@ public class StudentService extends Service<Student> {
 
         if(entity.getGroup() != null && entity.getGroup().getId() != null &&
                 !Objects.equals(entity.getGroup().getId(), student.getGroup().getId())){
-            StudentsGroup group = groupRepository.findById(entity.getGroup().getId())
+            Group group = groupRepository.findById(entity.getGroup().getId())
                             .orElseThrow(() -> new IllegalStateException("group does not exist"));
             student.setGroup(group);
         }
@@ -60,33 +84,31 @@ public class StudentService extends Service<Student> {
     }
 
     @Override
-    @Cacheable
+    @Cacheable(key="'allStudents'")
     public List<Student> getAll() {
         return repository.findAll();
     }
 
     @Override
-    @Cacheable
+    @Cacheable(key="'allStudents'")
     public List<Student> getPaged(int limit, int offset) {
         return repository.findAll(PageRequest.of(offset, limit)).stream().toList();
     }
 
     @Override
-    @Cacheable
+    @Cacheable(key="#id")
     public Optional<Student> getById(Long id) {
         return repository.findById(id);
     }
 
-    public boolean isValid(Student student){
-        if (student.getFirstName() == null || student.getFirstName().trim().isEmpty())
-            return false;
+    public void validate(Student student){
+        if (StringHelper.isEmpty(student.getFirstName()))
+            throw new IllegalArgumentException("first name" + Output.EMPTY_VALUE);
 
-        if (student.getLastName() == null || student.getLastName().trim().isEmpty())
-            return false;
+        if (StringHelper.isEmpty(student.getLastName()))
+            throw new IllegalArgumentException("last name" + Output.EMPTY_VALUE);
 
         if (student.getDateOfBirth() == null || student.getDateOfBirth().isAfter(LocalDate.now()))
-            return false;
-
-        return true;
+            throw new IllegalArgumentException("date of birth" + Output.INCORRECT_VALUE);
     }
 }

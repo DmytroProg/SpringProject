@@ -1,12 +1,20 @@
 package com.example.engtutor.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.io.Serializable;
 import java.util.List;
 
 @Entity
-@Table
-public class StudentsGroup {
+@Table(name="_groups")
+@NoArgsConstructor
+@Getter
+@Setter
+public class Group implements Serializable {
     @Id
     @SequenceGenerator(
             name = "group_sequence",
@@ -20,41 +28,15 @@ public class StudentsGroup {
     private Long id;
     private String name;
 
-    @OneToMany(mappedBy = "studentsGroup")
+    @OneToMany(mappedBy = "group")
     private List<Student> students;
 
-    public StudentsGroup() {
-    }
-    public StudentsGroup(String name) {
+    public Group(String name) {
         this.name = name;
     }
-    public StudentsGroup(Long id, String name) {
+    public Group(Long id, String name) {
         this.id = id;
         this.name = name;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public List<Student> getStudents() {
-        return students;
-    }
-
-    public void setStudents(List<Student> students) {
-        this.students = students;
     }
 
     @Override

@@ -1,13 +1,20 @@
 package com.example.engtutor.models;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.Period;
 
 @Entity
 @Table
-public class Student{
+@NoArgsConstructor
+@Getter
+@Setter
+public class Student implements Serializable {
 
     @Id
     @SequenceGenerator(
@@ -28,56 +35,21 @@ public class Student{
     private int age;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="group_id")
-    private StudentsGroup studentsGroup;
+    private Group group;
 
-    public Student(){
-    }
-    public Student(Long id, String firstName, String lastName, LocalDate dateOfBirth, StudentsGroup studentsGroup) {
+    public Student(Long id, String firstName, String lastName, LocalDate dateOfBirth, Group group) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.dateOfBirth = dateOfBirth;
-        this.studentsGroup = studentsGroup;
+        this.group = group;
     }
 
-    public Student(String firstName, String lastName, LocalDate dateOfBirth, StudentsGroup studentsGroup) {
+    public Student(String firstName, String lastName, LocalDate dateOfBirth, Group group) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.dateOfBirth = dateOfBirth;
-        this.studentsGroup = studentsGroup;
-    }
-
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public LocalDate getDateOfBirth() {
-        return dateOfBirth;
-    }
-
-    public void setDateOfBirth(LocalDate dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
+        this.group = group;
     }
 
     public int getAge() {
@@ -87,14 +59,6 @@ public class Student{
 
     public void setAge(int age) {
         this.age = age;
-    }
-
-    public StudentsGroup getGroup() {
-        return studentsGroup;
-    }
-
-    public void setGroup(StudentsGroup studentsGroup) {
-        this.studentsGroup = studentsGroup;
     }
 
     @Override
@@ -107,6 +71,4 @@ public class Student{
                 ", age=" + age +
                 '}';
     }
-
-
 }

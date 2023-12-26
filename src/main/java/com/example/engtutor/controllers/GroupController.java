@@ -1,13 +1,16 @@
 package com.example.engtutor.controllers;
 
 import com.example.engtutor.models.Student;
-import com.example.engtutor.models.StudentsGroup;
+import com.example.engtutor.models.Group;
 import com.example.engtutor.services.Service;
+import com.example.engtutor.viewmodel.ErrorViewModel;
 import com.example.engtutor.viewmodel.GroupViewModel;
 import com.example.engtutor.viewmodel.StudentViewModel;
 import com.example.engtutor.viewmodel.ViewModelBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,60 +19,69 @@ import java.util.Optional;
 @RestController
 @EnableCaching
 @RequestMapping("api/v1/groups")
-public class GroupController extends ControllerBase<StudentsGroup>{
+public class GroupController extends ControllerBase<Group>{
 
     @Autowired
-    public GroupController(Service<StudentsGroup> groupService) {
+    public GroupController(Service<Group> groupService) {
         super(groupService);
     }
 
     @GetMapping(path="{groupId}/students")
-    public List<StudentViewModel> getStudents(@PathVariable("groupId") Long groupId){
-        List<StudentViewModel> students = new ArrayList<>();
-        Optional<StudentsGroup> group = service.getById(groupId);
-        if(group.isEmpty()){
-            throw new IllegalStateException("group does not exist");
-        }
+    public ResponseEntity<Object> getStudents(@PathVariable("groupId") Long groupId){
+        return handleResponse((obj) -> {
+            List<StudentViewModel> students = new ArrayList<>();
+            var group = service.getById(groupId)
+                    .orElseThrow(() -> new NullPointerException("group not found"));
 
-        for(Student st : group.get().getStudents()){
-            StudentViewModel studentVM = new StudentViewModel(st);
-            students.add(studentVM);
-        }
-        return students;
+            for(Student student : group.getStudents()){
+                StudentViewModel studentVM = new StudentViewModel(student);
+                students.add(studentVM);
+            }
+
+            return students;
+        }, HttpStatus.OK);
     }
 
     @GetMapping
-    public List<ViewModelBase> getGroups(){
-        return getViewModels(service.getAll());
+    public ResponseEntity<Object> getGroups(){
+        return handleResponse(obj -> getViewModels(service.getAll()), HttpStatus.OK);
     }
 
     @GetMapping(params={"limit", "offset"})
-    public List<ViewModelBase> getPagedGroups(@RequestParam("limit") int limit,
-                                               @RequestParam("offset") int offset){
-        return getViewModels(service.getPaged(limit, offset));
+    public ResponseEntity<Object> getPagedGroups(@RequestParam("limit") int limit,
+                                               @RequestParam(value="offset", required = false) int offset){
+        return handleResponse(obj -> getViewModels(service.getPaged(limit, offset)), HttpStatus.OK);
     }
 
     @GetMapping("{groupId}")
-    public ViewModelBase getGroup(@PathVariable("groupId") Long id){
-        return getById(id);
+    public ResponseEntity<Object> getGroup(@PathVariable("groupId") Long id){
+        return handleResponse(obj -> getById(id), HttpStatus.OK);
     }
 
     @PostMapping
-    public void addGroup(@RequestBody GroupViewModel groupVM){
-        StudentsGroup group = new StudentsGroup(groupVM.id, groupVM.name);
-        service.add(group);
+    public ResponseEntity<Object> addGroup(@RequestBody GroupViewModel groupVM){
+        return handleResponse(obj -> {
+            Group group = new Group(groupVM.id, groupVM.name);
+            service.add(group);
+            return new GroupViewModel(group);
+        }, HttpStatus.CREATED);
     }
 
     @DeleteMapping(path = "{groupId}")
-    public void deleteGroup(@PathVariable("groupId") Long id){
-        service.remove(id);
+    public ResponseEntity<Object> deleteGroup(@PathVariable("groupId") Long id){
+        return handleResponse(obj -> {
+            service.remove(id);
+            return null;
+        }, HttpStatus.OK);
     }
 
     @PutMapping(path = "{groupId}")
-    public void updateGroup(@PathVariable("groupId") Long groupId,
+    public ResponseEntity<Object> updateGroup(@PathVariable("groupId") Long groupId,
                               @RequestParam(required = false) String name){
-
-        StudentsGroup group = new StudentsGroup(groupId, name);
-        service.update(groupId, group);
+        return handleResponse(obj -> {
+            Group group = new Group(groupId, name);
+            service.update(groupId, group);
+            return new GroupViewModel(group);
+        }, HttpStatus.OK);
     }
 }

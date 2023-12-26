@@ -1,6 +1,6 @@
 package com.example.engtutor.viewmodel;
 
-import com.example.engtutor.models.StudentsGroup;
+import com.example.engtutor.models.Group;
 
 public class GroupViewModel extends ViewModelBase{
     public Long id;
@@ -10,7 +10,7 @@ public class GroupViewModel extends ViewModelBase{
 
     }
 
-    public GroupViewModel(StudentsGroup group){
+    public GroupViewModel(Group group){
         id = group.getId();
         name = group.getName();
     }

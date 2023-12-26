@@ -1,17 +1,17 @@
 package com.example.engtutor.services;
 
+import com.example.engtutor.helpers.Output;
+import com.example.engtutor.helpers.StringHelper;
 import com.example.engtutor.models.Lesson;
-import com.example.engtutor.models.StudentsGroup;
+import com.example.engtutor.models.Group;
 import com.example.engtutor.models.Teacher;
 import com.example.engtutor.repository.GroupRepository;
+import com.example.engtutor.repository.LessonRepository;
 import com.example.engtutor.repository.TeacherRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.*;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Objects;
@@ -19,21 +19,44 @@ import java.util.Optional;
 
 @org.springframework.stereotype.Service
 @CacheConfig(cacheNames = "lessons")
-public class LessonService extends Service<Lesson> {
+public class LessonService implements Service<Lesson> {
 
+    private final LessonRepository repository;
     private final GroupRepository groupRepository;
     private final TeacherRepository teacherRepository;
 
     @Autowired
-    public LessonService(JpaRepository<Lesson, Long> lessonRepository, GroupRepository groupRepository, TeacherRepository teacherRepository) {
-        super(lessonRepository);
+    public LessonService(LessonRepository repository, GroupRepository groupRepository, TeacherRepository teacherRepository) {
+        this.repository = repository;
         this.groupRepository = groupRepository;
         this.teacherRepository = teacherRepository;
     }
 
     @Override
+    @CachePut(key="#entity.id")
+    public Lesson add(Lesson entity) {
+        validate(entity);
+        return repository.save(entity);
+    }
+
+    @Override
+    @Caching(evict = {
+            @CacheEvict(key = "'allLessons'"),
+            @CacheEvict(key = "#id")
+    })
+    public void remove(Long id) {
+        var item = repository.findById(id);
+        if(item.isEmpty())
+            throw new IllegalArgumentException("group" + Output.VALUE_NOT_EXIST);
+        repository.deleteById(id);
+    }
+
+    @Override
     @Transactional
-    @CachePut
+    @Caching(evict = {
+            @CacheEvict(key = "'allLessons'"),
+            @CacheEvict(key = "#id")
+    })
     public Lesson update(Long id, Lesson entity) {
         Lesson lesson = repository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("student does not exist"));
@@ -48,9 +71,9 @@ public class LessonService extends Service<Lesson> {
             lesson.setDate(entity.getDate());
         }
 
-        if(entity.getGroup() != null && entity.getGroup().getId() != null &&
+        if(entity.getGroup() != null &&
                 !Objects.equals(entity.getGroup().getId(), lesson.getGroup().getId())){
-            StudentsGroup group = groupRepository.findById(entity.getGroup().getId())
+            Group group = groupRepository.findById(entity.getGroup().getId())
                     .orElseThrow(() -> new IllegalStateException("group does not exist"));
             lesson.setGroup(group);
         }
@@ -66,31 +89,29 @@ public class LessonService extends Service<Lesson> {
     }
 
     @Override
-    @Cacheable
+    @Cacheable(key="'allLessons'")
     public List<Lesson> getAll() {
         return repository.findAll();
     }
 
     @Override
-    @Cacheable
+    @Cacheable(key="'allLessons'")
     public List<Lesson> getPaged(int limit, int offset) {
         return repository.findAll(PageRequest.of(offset, limit)).stream().toList();
     }
 
     @Override
-    @Cacheable
+    @Cacheable(key="#id")
     public Optional<Lesson> getById(Long id) {
         return repository.findById(id);
     }
 
     @Override
-    public boolean isValid(Lesson lesson) {
-        if (lesson.getTitle() == null || lesson.getTitle().trim().isEmpty())
-            return false;
+    public void validate(Lesson lesson) {
+        if (StringHelper.isEmpty(lesson.getTitle()))
+            throw new IllegalArgumentException("title" + Output.EMPTY_VALUE);
 
-        if (lesson.getDate() == null)
-            return false;
-
-        return true;
+        if(lesson.getDate() == null)
+            throw new IllegalArgumentException("date" + Output.EMPTY_VALUE);
     }
 }

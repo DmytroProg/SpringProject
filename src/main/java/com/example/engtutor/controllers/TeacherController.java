@@ -8,6 +8,8 @@ import com.example.engtutor.viewmodel.TeacherViewModel;
 import com.example.engtutor.viewmodel.ViewModelBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -24,58 +26,69 @@ public class TeacherController extends ControllerBase<Teacher>{
     }
 
     @GetMapping
-    public List<ViewModelBase> getTeachers(){
-       return getViewModels(service.getAll());
+    public ResponseEntity<Object> getTeachers(){
+        return handleResponse(obj -> getViewModels(service.getAll()), HttpStatus.OK);
     }
 
     @GetMapping(params={"limit", "offset"})
-    public List<ViewModelBase> getPagedTeachers(@RequestParam("limit") int limit,
-                                               @RequestParam("offset") int offset){
-        return getViewModels(service.getPaged(limit, offset));
+    public ResponseEntity<Object> getPagedTeachers(@RequestParam("limit") int limit,
+                                               @RequestParam(value="offset", required = false) int offset){
+        return handleResponse(obj -> getViewModels(service.getPaged(limit, offset)), HttpStatus.OK);
     }
 
     @GetMapping(path = "{teacherId}")
-    public ViewModelBase getTeacher(@PathVariable("teacherId") Long id){
-        return getById(id);
+    public ResponseEntity<Object> getTeacher(@PathVariable("teacherId") Long id){
+        return handleResponse(obj -> getById(id), HttpStatus.OK);
     }
 
     @GetMapping(path = "{teacherId}/lessons")
-    public List<LessonViewModel> getLessons(@PathVariable("teacherId") Long id){
-        List<LessonViewModel> lessons = new ArrayList<>();
-        Teacher teacher = service.getById(id)
-                .orElseThrow(() -> new IllegalStateException("teacher does not exist"));
-        for(Lesson l : teacher.getLessons()){
-            LessonViewModel lessonVM = new LessonViewModel(l);
-            lessons.add(lessonVM);
-        }
-        return lessons;
+    public ResponseEntity<Object> getLessons(@PathVariable("teacherId") Long id){
+        return handleResponse(obj -> {
+            List<LessonViewModel> lessons = new ArrayList<>();
+            var teacher = service.getById(id)
+                    .orElseThrow(() -> new NullPointerException("teacher not found"));
+            for (Lesson lesson : teacher.getLessons()) {
+                LessonViewModel lessonVM = new LessonViewModel(lesson);
+                lessons.add(lessonVM);
+            }
+            return lessons;
+        }, HttpStatus.OK);
     }
 
     @PostMapping
-    public void addTeacher(@RequestBody TeacherViewModel teacherViewModel){
-        Teacher teacher = new Teacher(
-                teacherViewModel.firstName,
-                teacherViewModel.lastName,
-                teacherViewModel.dateOfBirth,
-                teacherViewModel.description,
-                teacherViewModel.salary
+    public ResponseEntity<Object> addTeacher(@RequestBody TeacherViewModel teacherViewModel){
+        return handleResponse(obj -> {
+            Teacher teacher = new Teacher(
+                    teacherViewModel.firstName,
+                    teacherViewModel.lastName,
+                    teacherViewModel.dateOfBirth,
+                    teacherViewModel.description,
+                    teacherViewModel.salary
             );
-        service.add(teacher);
+            service.add(teacher);
+            return new TeacherViewModel(teacher);
+        }, HttpStatus.CREATED);
     }
 
     @DeleteMapping(path = "{teacherId}")
-    public void deleteTeacher(@PathVariable("teacherId") Long id){
-        service.remove(id);
+    public ResponseEntity<Object> deleteTeacher(@PathVariable("teacherId") Long id){
+        return handleResponse(obj -> {
+            service.remove(id);
+            return null;
+        }, HttpStatus.OK);
     }
 
     @PutMapping(path = "{teacherId}")
-    public void updateTeacher(@PathVariable("teacherId") Long id,
+    public ResponseEntity<Object> updateTeacher(@PathVariable("teacherId") Long id,
                               @RequestParam(required = false) String firstName,
                               @RequestParam(required = false) String lastName,
                               @RequestParam(required = false) LocalDate dateOfBirth,
                               @RequestParam(required = false) String description,
                               @RequestParam(required = false) int salary){
-        Teacher teacher = new Teacher(id, firstName, lastName, dateOfBirth, description, salary);
-        service.update(id, teacher);
+        return handleResponse(obj -> {
+            Teacher teacher = new Teacher(id, firstName, lastName, dateOfBirth, description, salary);
+            service.update(id, teacher);
+            return new TeacherViewModel(teacher);
+        }, HttpStatus.OK);
     }
 }

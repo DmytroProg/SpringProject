@@ -1,14 +1,21 @@
 package com.example.engtutor.models;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
 
 @Entity
 @Table
-public class Teacher{
+@NoArgsConstructor
+@Getter
+@Setter
+public class Teacher implements Serializable {
     @Id
     @SequenceGenerator(
             name = "teacher_sequence",
@@ -31,9 +38,6 @@ public class Teacher{
     @OneToMany(mappedBy = "teacher")
     private List<Lesson> lessons;
 
-    public Teacher(){
-
-    }
     public Teacher(Long id, String firstName, String lastName, LocalDate dateOfBirth, String description, int salary) {
         this.id = id;
         this.firstName = firstName;
@@ -51,38 +55,6 @@ public class Teacher{
         this.salary = salary;
     }
 
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public LocalDate getDateOfBirth() {
-        return dateOfBirth;
-    }
-
-    public void setDateOfBirth(LocalDate dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
-    }
-
     public int getAge() {
         age = Period.between(dateOfBirth, LocalDate.now()).getYears();
         return age;
@@ -90,13 +62,6 @@ public class Teacher{
 
     public void setAge(int age) {
         this.age = age;
-    }
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     @Override
@@ -110,21 +75,5 @@ public class Teacher{
                 ", description=" + getDescription() +
                 ", salary=" + getSalary() +
                 '}';
-    }
-
-    public int getSalary() {
-        return salary;
-    }
-
-    public void setSalary(int salary) {
-        this.salary = salary;
-    }
-
-    public List<Lesson> getLessons() {
-        return lessons;
-    }
-
-    public void setLessons(List<Lesson> lessons) {
-        this.lessons = lessons;
     }
 }
