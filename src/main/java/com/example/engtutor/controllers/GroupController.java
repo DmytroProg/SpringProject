@@ -3,10 +3,7 @@ package com.example.engtutor.controllers;
 import com.example.engtutor.models.Student;
 import com.example.engtutor.models.Group;
 import com.example.engtutor.services.Service;
-import com.example.engtutor.viewmodel.ErrorViewModel;
-import com.example.engtutor.viewmodel.GroupViewModel;
-import com.example.engtutor.viewmodel.StudentViewModel;
-import com.example.engtutor.viewmodel.ViewModelBase;
+import com.example.engtutor.viewmodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.http.HttpStatus;
@@ -71,7 +68,7 @@ public class GroupController extends ControllerBase<Group>{
     public ResponseEntity<Object> deleteGroup(@PathVariable("groupId") Long id){
         return handleResponse(obj -> {
             service.remove(id);
-            return null;
+            return new SnapshotViewModel(id);
         }, HttpStatus.OK);
     }
 
@@ -81,7 +78,9 @@ public class GroupController extends ControllerBase<Group>{
         return handleResponse(obj -> {
             Group group = new Group(groupId, name);
             service.update(groupId, group);
-            return new GroupViewModel(group);
+            var newGroup = service.getById(groupId)
+                    .orElseThrow(NullPointerException::new);
+            return new GroupViewModel(newGroup);
         }, HttpStatus.OK);
     }
 }

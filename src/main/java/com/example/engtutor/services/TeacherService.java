@@ -64,7 +64,7 @@ public class TeacherService implements Service<Teacher> {
         }
 
         if(entity.getDateOfBirth() != null &&
-                !Objects.equals(entity.getDateOfBirth(), teacher.getDateOfBirth())){
+                !entity.getDateOfBirth().equals(teacher.getDateOfBirth())){
             teacher.setDateOfBirth(entity.getDateOfBirth());
         }
 
@@ -110,6 +110,6 @@ public class TeacherService implements Service<Teacher> {
             throw new IllegalArgumentException("date of birth" + Output.INCORRECT_VALUE);
 
         if(teacher.getSalary() < 0)
-            throw new IllegalArgumentException("salary" + Output.EMPTY_VALUE);
+            throw new IllegalArgumentException("salary" + Output.NEGATIVE_VALUE);
     }
 }

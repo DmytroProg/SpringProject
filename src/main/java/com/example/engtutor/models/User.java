@@ -1,4 +1,4 @@
-package com.example.engtutor.user;
+package com.example.engtutor.models;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -23,8 +23,8 @@ public class User implements UserDetails{
     @Id
     @GeneratedValue
     private Long id;
-    private String firstname;
-    private String lastname;
+    private String firstName;
+    private String lastName;
     private String password;
     private String email;
 

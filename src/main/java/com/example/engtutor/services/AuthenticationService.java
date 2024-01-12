@@ -1,9 +1,11 @@
-package com.example.engtutor.auth;
+package com.example.engtutor.services;
 
-import com.example.engtutor.config.JwtService;
-import com.example.engtutor.user.Role;
-import com.example.engtutor.user.User;
-import com.example.engtutor.user.UserRepository;
+import com.example.engtutor.auth.AuthenticationRequest;
+import com.example.engtutor.auth.AuthenticationResponse;
+import com.example.engtutor.auth.RegisterRequest;
+import com.example.engtutor.models.Role;
+import com.example.engtutor.models.User;
+import com.example.engtutor.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,14 +33,14 @@ public class AuthenticationService {
         validate(request);
 
         var user = User.builder()
-                .firstname(request.getFirstname())
-                .lastname(request.getLastname())
+                .firstName(request.getFirstname())
+                .lastName(request.getLastname())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
+                .role(Role.ADMIN)
                 .build();
         if(userRepository.findByEmail(request.getEmail()).isPresent()){
-            throw new InstanceAlreadyExistsException();
+            throw new InstanceAlreadyExistsException("This email is already taken");
         }
 
         userRepository.save(user);

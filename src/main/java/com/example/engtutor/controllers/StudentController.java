@@ -2,6 +2,7 @@ package com.example.engtutor.controllers;
 
 import com.example.engtutor.models.Group;
 import com.example.engtutor.viewmodel.ErrorViewModel;
+import com.example.engtutor.viewmodel.SnapshotViewModel;
 import com.example.engtutor.viewmodel.StudentViewModel;
 import com.example.engtutor.services.Service;
 import com.example.engtutor.models.Student;
@@ -65,7 +66,7 @@ public class StudentController extends ControllerBase<Student>{
     public ResponseEntity<Object> deleteStudent(@PathVariable("studentId") Long id){
         return handleResponse(obj -> {
             service.remove(id);
-            return null;
+            return new SnapshotViewModel(id);
         }, HttpStatus.OK);
     }
 
@@ -80,7 +81,9 @@ public class StudentController extends ControllerBase<Student>{
                     .orElseThrow(() -> new NullPointerException("group not found"));
             Student student = new Student(studentId, firstName, lastName, dateOfBirth, group);
             service.update(studentId, student);
-            return new StudentViewModel(student);
+            var newStudent = service.getById(studentId)
+                    .orElseThrow(NullPointerException::new);
+            return new StudentViewModel(newStudent);
         }, HttpStatus.OK);
     }
 }

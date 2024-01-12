@@ -1,5 +1,6 @@
-package com.example.engtutor.user;
+package com.example.engtutor.repository;
 
+import com.example.engtutor.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -1,6 +1,6 @@
 package com.example.engtutor.config;
 
-import com.example.engtutor.user.UserRepository;
+import com.example.engtutor.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

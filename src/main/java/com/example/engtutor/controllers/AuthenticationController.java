@@ -1,5 +1,8 @@
-package com.example.engtutor.auth;
+package com.example.engtutor.controllers;
 
+import com.example.engtutor.auth.AuthenticationRequest;
+import com.example.engtutor.services.AuthenticationService;
+import com.example.engtutor.auth.RegisterRequest;
 import com.example.engtutor.viewmodel.ErrorViewModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -4,6 +4,7 @@ import com.example.engtutor.models.Lesson;
 import com.example.engtutor.models.Teacher;
 import com.example.engtutor.services.Service;
 import com.example.engtutor.viewmodel.LessonViewModel;
+import com.example.engtutor.viewmodel.SnapshotViewModel;
 import com.example.engtutor.viewmodel.TeacherViewModel;
 import com.example.engtutor.viewmodel.ViewModelBase;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,7 +75,7 @@ public class TeacherController extends ControllerBase<Teacher>{
     public ResponseEntity<Object> deleteTeacher(@PathVariable("teacherId") Long id){
         return handleResponse(obj -> {
             service.remove(id);
-            return null;
+            return new SnapshotViewModel(id);
         }, HttpStatus.OK);
     }
 
@@ -88,7 +89,9 @@ public class TeacherController extends ControllerBase<Teacher>{
         return handleResponse(obj -> {
             Teacher teacher = new Teacher(id, firstName, lastName, dateOfBirth, description, salary);
             service.update(id, teacher);
-            return new TeacherViewModel(teacher);
+            var newTeacher = service.getById(id)
+                    .orElseThrow(NullPointerException::new);
+            return new TeacherViewModel(newTeacher);
         }, HttpStatus.OK);
     }
 }

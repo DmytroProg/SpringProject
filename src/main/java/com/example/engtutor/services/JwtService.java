@@ -1,4 +1,4 @@
-package com.example.engtutor.config;
+package com.example.engtutor.services;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
